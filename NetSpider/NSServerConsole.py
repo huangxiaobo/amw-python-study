@@ -85,14 +85,14 @@ class TelnetServer():
 			#self.logger.debug('connect from %s' % sock.getpeername())
 
 	def handle_read(self, client):
-		self.logger.debug('handle_read')
+		# self.logger.debug('handle_read')
 		conn = self.connections.get(client, None)
 		if conn:
 			data = conn.handle_read()
 			conn.send_data(data)
 
 	def handle_write(self, client):
-		self.logger.debug('handle_write')
+		# self.logger.debug('handle_write')
 		conn = self.connections.get(client, None)
 		if conn:
 			conn.handle_write()
