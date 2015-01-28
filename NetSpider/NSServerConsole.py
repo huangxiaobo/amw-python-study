@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # encoding=utf-8
-
+import time
 import socket
 import asyncore
 import threading
@@ -15,7 +15,6 @@ class TelnetServer():
 
 	def __init__(self, host, port):
 		self.logger = NSLogger.get_logger('NSServerConsole.TelnetServer')
-		self.logger.debug('__init__')
 		self.host = host
 		self.port = port
 		self.client_id = 1
@@ -34,10 +33,14 @@ class TelnetServer():
 		self.w_socks = []
 		self.r_socks = [self.sock]
 		self.e_socks = []
-		self.connections = {}		
+		self.connections = {}
+
+		while True:
+			time.sleep(1)
+			self.process()
 
 	def stop(self):
-		pass	
+		pass
 
 	def try_bind(self):
 		self.logger.debug('try_bind')
@@ -51,14 +54,11 @@ class TelnetServer():
 					raise StandardError('TelnetServer failed to find a port to bind')
 
 	def process(self):
-		self.logger.debug('process')
-
 		readable , writable , exceptional = select.select(self.r_socks, self.w_socks, self.r_socks,TelnetServer.TIMEOUT)
 		if not(readable, writable, exceptional):
 			self.logger.debug('time out...')
 			return
 		for s in readable:
-			print 'read s: ', s
 			if s is self.sock:
 				#主机
 				#接受连接
@@ -67,7 +67,6 @@ class TelnetServer():
 				#发来消息
 				self.handle_read(s)
 		for s in writable:
-			print 'write s: ', s.getpeername()
 			self.handle_write(s)
 		for s in exceptional:
 			self.handle_leave(s)
@@ -82,35 +81,28 @@ class TelnetServer():
 			self.client_id += 1
 			print 'connect from ', sock.getpeername()
 			conn.send_data('hello\r\n')
-			#self.logger.debug('connect from %s' % sock.getpeername())
 
 	def handle_read(self, client):
-		# self.logger.debug('handle_read')
 		conn = self.connections.get(client, None)
 		if conn:
 			data = conn.handle_read()
 			conn.send_data(data)
 
 	def handle_write(self, client):
-		# self.logger.debug('handle_write')
 		conn = self.connections.get(client, None)
 		if conn:
 			conn.handle_write()
 
 	def handle_leave(self, client):
-		self.logger.debug('handle_leave')
 		self._del_client(client)
 		return True
 
 	def _del_client(self, client):
-		self.logger.debug('_del_client')
 		del self.connections[client]
 		self.r_socks.remove(client)
 		self.w_socks.remove(client)
 
 	def _add_client(self, client_id, client):
-		self.logger.debug('_add_client')
-
 		self.r_socks.append(client)
 		self.w_socks.append(client)
 		self.connections[client] = TelnetConnection(client_id, client)
@@ -121,7 +113,6 @@ class TelnetConnection(object):
 
 	def __init__(self, clientid, sock):
 		self.logger = NSLogger.get_logger('NSServerConsole.TelnetConnection')
-		self.logger.debug('__init__')
 		self.w_buffer = StringIO()
 		self.r_buffer = StringIO()
 		self.sock = sock
@@ -130,14 +121,12 @@ class TelnetConnection(object):
 
 
 	def handle_read(self):
-		self.logger.debug('handle_read')
 		data = self.sock.recv(TelnetConnection.DEFAULT_RECV_BUFFER)
 		if len(data) > 0:
 			print 'recv : ', data
 		return data
 
 	def handle_write(self):
-		self.logger.debug('handle_write')
 		buff = self.w_buffer.getvalue()
 		if buff:
 			sent = self.sock.send(buff)
