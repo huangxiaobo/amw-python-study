@@ -8,8 +8,12 @@ import select
 from cStringIO import StringIO
 
 from NSLogger import NSLogger
+import NSConst as NSConst
 
 # 负责接受Client socket的连接
+
+
+
 class TelnetServer():
 	TIMEOUT = 20
 
@@ -51,20 +55,22 @@ class TelnetServer():
 			except:
 				self.port += 1
 				if self.port > 2**16 - 1:
-					raise StandardError('TelnetServer failed to find a port to bind')
+					raise StandardError(
+						'TelnetServer failed to find a port to bind')
 
 	def process(self):
-		readable , writable , exceptional = select.select(self.r_socks, self.w_socks, self.r_socks,TelnetServer.TIMEOUT)
+		readable, writable, exceptional = select.select(
+			self.r_socks, self.w_socks, self.r_socks, TelnetServer.TIMEOUT)
 		if not(readable, writable, exceptional):
 			self.logger.debug('time out...')
 			return
 		for s in readable:
 			if s is self.sock:
-				#主机
-				#接受连接
+				# 主机
+				# 接受连接
 				self.handle_accept()
 			else:
-				#发来消息
+				# 发来消息
 				self.handle_read(s)
 		for s in writable:
 			self.handle_write(s)
@@ -108,6 +114,7 @@ class TelnetServer():
 		self.connections[client] = TelnetConnection(client_id, client)
 		return self.connections[client]
 
+
 class TelnetConnection(object):
 	DEFAULT_RECV_BUFFER = 4096
 
@@ -118,7 +125,6 @@ class TelnetConnection(object):
 		self.sock = sock
 		self.clientid = clientid
 		self.clientname = None
-
 
 	def handle_read(self):
 		data = self.sock.recv(TelnetConnection.DEFAULT_RECV_BUFFER)
@@ -139,5 +145,3 @@ class TelnetConnection(object):
 
 	def test_writable(self):
 		return self.w_buffer.getvalue()
-
-

@@ -1,6 +1,8 @@
 import socket
 import threading
-import sys, urllib
+import sys
+import signal
+import urllib
 import time
 import Queue
 from bs4 import BeautifulSoup
@@ -8,23 +10,26 @@ from NSLogger import NSLogger
 import NSConst
 import NSUtils
 
-is_exit = False
+exit = False
+
 
 def exit_handler(signum, frame):
-	global is_exit
-	is_exit = True
-	print 'receive a signal %d, is_exit: %d' % (signal, is_exit)
+	global exit
+	exit = True
+	print 'receive a signum %d, exit: %d' % (signum, exit)
 
 
 class NSSpider:
+
 	def __init__(self):
 		self.logger = NSLogger.get_logger('NSSpider.NSSpider')
 		self.work_queue = Queue.Queue()
 		self.work_queue.put('http://www.baidu.com/')
 		# thread pool
-		self.pool = [threading.Thread(target = self.process, args = (self.work_queue, )) for _ in range(NSConst.POOL_SIZE)]
-		self.pool.append(threading.Thread(target = self.start_telnet_console, args = ()))
-
+		self.pool = [threading.Thread(target=self.process, args=(
+			self.work_queue, )) for _ in range(NSConst.POOL_SIZE)]
+		self.pool.append(
+			threading.Thread(target=self.start_telnet_console, args=()))
 
 	def setup(self):
 		self.logger.debug('debug message')
@@ -36,34 +41,41 @@ class NSSpider:
 		for t in self.pool:
 			t.join()
 
+		print '--------end'
 
 	def start_telnet_console(self):
 		self.logger.debug('_startTelnetConsole')
-		#try:
+		# try:
 		import NSServerConsole
-		self.telnetServer = NSServerConsole.TelnetServer(host = '127.0.0.1', port = 30000)
+		self.telnetServer = NSServerConsole.TelnetServer(
+			host='127.0.0.1', port=30000)
 		self.telnetServer.start()
 
 	def process(self, work_queue):
+		global exit
 		if not work_queue:
 			return
 		while True:
-			url = work_queue.get(block = True)
+			if exit:
+				return
+			# else:
+			#     continue
+			url = work_queue.get(block=True)
 			try:
-				# print 'ready to read:', url
+				self.logger.info('ready to read: %s' % url)
 				f = urllib.urlopen(url)
-			except:
-				# print 'urlopen exception'
+			except Exception, e:
+				self.logger.exception(e)
 				continue
 			soup = BeautifulSoup(f)
 			for link in soup.find_all('a'):
 				if link.get('href', None):
-					# print link.get('href', '')
+					# self.logger.info('extract url:: %s' % link.get('href', ''))
 					work_queue.put(link.get('href', ''))
 			work_queue.task_done()
 
 if __name__ == '__main__':
-
+	signal.signal(signal.SIGINT, exit_handler)
 	spider = NSSpider()
 	spider.setup()
 	spider.start()
