@@ -8,10 +8,9 @@ import requests
 import time
 import Queue
 from bs4 import BeautifulSoup
-from NSLogger import NSLogger
-import NSConst
-import NSUtils
-import NSTelnet
+import logger
+import utils
+import telnet
 
 exit = False
 
@@ -21,14 +20,10 @@ def exit_handler(signum, frame):
 	exit = True
 	print 'receive a signum %d, exit: %d' % (signum, exit)
 
-
-class NSItem(object):
-	pass
-
-class NSSpider:
+class Spider:
 
 	def __init__(self):
-		self.logger = NSLogger.get_logger('NSSpider.NSSpider')
+		self.logger = logger.get_logger('NSSpider.NSSpider')
 		self.work_queue = Queue.Queue()
 		self.work_queue.put('http://www.baidu.com/')
 
@@ -45,16 +40,9 @@ class NSSpider:
 		while True:
 			if exit or not self.work_queue:
 				return
-			# else:
-			#     continue
 			url = self.work_queue.get(block=True)
 			try:
-				self.logger.info('ready to read: %s' % url)
 				r = requests.get(url)
-				print r.status_code
-				print r.url
-				print r.text.encode('utf-8')
-				print r.encoding
 			except Exception, e:
 				self.logger.exception(e)
 				continue
@@ -68,7 +56,7 @@ class NSSpider:
 
 if __name__ == '__main__':
 	signal.signal(signal.SIGINT, exit_handler)
-	spider = NSSpider()
+	spider = Spider()
 	spider.setup()
 	spider.start()
 	spider.run()

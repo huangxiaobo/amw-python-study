@@ -3,14 +3,14 @@ import logging
 import sys
 
 
-class NSLogger(object):
+class Logger(object):
 	log_modules = set()
 	log_level = logging.DEBUG
-	logging.basicConfig(filename='NSLogger.log', level=logging.DEBUG)
+	logging.basicConfig(filename='log.txt', level=logging.DEBUG)
 
 	@staticmethod
 	def get_logger(moduleName):
-		if moduleName in NSLogger.log_modules:
+		if moduleName in Logger.log_modules:
 			return logging.getLogger(moduleName)
 		logger = logging.getLogger(moduleName)
 		# logger.setLevel(logging.DEBUG)
@@ -24,5 +24,7 @@ class NSLogger(object):
 
 		logger.addHandler(ch)
 
-		NSLogger.log_modules.add(moduleName)
+		Logger.log_modules.add(moduleName)
 		return logger
+
+get_logger = Logger.get_logger

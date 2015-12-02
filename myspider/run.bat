@@ -1,0 +1,6 @@
+@ECHO off
+
+set SPIDER_PATH=%~p0
+ECHO %SPIDER_PATH%
+ECHO.
+python %SPIDER_PATH%/NSSpider.py
