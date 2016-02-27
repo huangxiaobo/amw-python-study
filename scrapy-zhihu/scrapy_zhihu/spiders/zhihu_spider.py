@@ -9,8 +9,9 @@ class SpiderZhihu(CrawlSpider):
 	name = 'zhihu'
 
 	allowed_domains = ['www.zhihu.com']
+
 	start_urls = [
-		'http://www.zhihu.com'
+		'https://www.zhihu.com/topics'
 		]
 
 	headers = {
@@ -37,12 +38,10 @@ class SpiderZhihu(CrawlSpider):
 		"n_c" : "1"
 		}
 
-	def parse(self, response):
-		pass
-
 	def start_requests(self):
+		"""start_requests."""
 		return [scrapy.FormRequest(
-			"http://www.zhihu.com/login/email",
+			"https://www.zhihu.com/login/email",
 			formdata = {"email" : "767806886@qq.com",
 				"_xsrf" : "464d07628dc5d61f9dfb9b4ae5d33838",
 				"password" : "amwihihc",
@@ -53,4 +52,46 @@ class SpiderZhihu(CrawlSpider):
 			callback = self.after_login)]
 
 	def after_login(self, response):
-		pass
+		"""after_login."""
+		for url in self.start_urls:
+			yield self.make_requests_from_url(url, callback = self.parse_topic_page)
+
+	def make_requests_from_url(self, url, **kwargs):
+		"""make_requests_from_url."""
+		if 'cookies' not in kwargs:
+			kwargs['cookies'] = self.cookie
+		if 'headers' not in kwargs:
+			kwargs['headers'] = self.headers
+		kwargs['dont_filter'] = True
+		return scrapy.Request(url, **kwargs)
+
+	def parse_page(self, response):
+		"""parse_page."""
+		print response.body
+
+	def parse(self, response):
+		"""parse."""
+		print response.body
+
+	def parse_topic_page(self, response):
+		"""parse_topic_page.
+
+		Get all topics url.
+		"""
+		topics = []
+		selector = scrapy.Selector(response)
+		for scope in selector.xpath('//div[re:test(@class, "item")]'):
+			topic = {}
+			for key, path in {
+				'href'	: './div//a[contains(@href, "topic")]/@href',
+				'img'	: './div//img/@src',
+				'title'	: './div//strong/text()',
+				'desc'	: './div/p/text()',
+				}.iteritems():
+				scope_result = scope.xpath(path).extract()
+				topic[key] = scope_result[0].encode('utf-8') if scope_result else ''
+			topics.append(topic)
+
+		for topic in topics:
+			url = 'https://www.zhihu.com' + topic['href']
+			yield self.make_requests_from_url(url, callback = self.parse)
