@@ -4,6 +4,7 @@
 from scrapy.contrib.spiders import CrawlSpider
 from scrapy.http import Request, FormRequest
 import scrapy
+import json
 
 class SpiderZhihu(CrawlSpider):
 	name = 'zhihu'
@@ -95,3 +96,24 @@ class SpiderZhihu(CrawlSpider):
 		for topic in topics:
 			url = 'https://www.zhihu.com' + topic['href']
 			yield self.make_requests_from_url(url, callback = self.parse)
+
+		try:
+			init_data_str = selector.xpath('//div[re:test(@class, "zh-general-list")]/@data-init').extract()[0]
+			init_data_dict = json.loads(init_data_str)
+			init_data_str = None
+
+			xsrf_str = selector.xpath('//input[re:test(@name, "_xsrf")]/@value').extract()[0]
+		except:
+			return
+
+		nodename = init_data_dict['nodename']
+		params = init_data_dict['params']
+		yield scrapy.FormRequest(
+			"https://www.zhihu.com/node/" + nodename,
+			formdata = {"method" : "next", "params" : params, "_xsrf" : xsrf_str},
+			headers = self.headers,
+			cookies = self.cookie,
+			callback = self.next_topic_page)
+
+	def next_topic_page(self, response):
+		print response.body
