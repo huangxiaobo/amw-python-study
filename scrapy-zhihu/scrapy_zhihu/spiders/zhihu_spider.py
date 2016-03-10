@@ -39,6 +39,10 @@ class SpiderZhihu(CrawlSpider):
 		"n_c" : "1"
 		}
 
+	def __init__(self):
+		super(CrawlSpider, self).__init__()
+		self.topic_offset = 0
+
 	def start_requests(self):
 		"""start_requests."""
 		return [scrapy.FormRequest(
@@ -79,8 +83,52 @@ class SpiderZhihu(CrawlSpider):
 
 		Get all topics url.
 		"""
-		topics = []
 		selector = scrapy.Selector(response)
+		# self.topic_offset = self.extract_topic_item(selector)
+
+		try:
+			init_list_data_str = selector.xpath('//div[re:test(@class, "zh-general-list")]/@data-init').extract()[0]
+			init_list_data_dict = json.loads(init_list_data_str)
+			init_list_data_str = None
+
+			xsrf_str = selector.xpath('//input[re:test(@name, "_xsrf")]/@value').extract()[0]
+		except Exception, e:
+			print "PARSE_TOPIC_PAGE Error", e
+			return
+
+		nodename = init_list_data_dict['nodename']
+		node_url = "https://www.zhihu.com/node/" + nodename
+		params = init_list_data_dict['params']
+
+		for offset in range(0, 650, 20):
+			yield self.try_get_next_topic_page(node_url, params, xsrf_str, offset)
+
+	def try_get_next_topic_page(self, url, params, _xsrf, offset):
+		params['offset'] = offset
+		return scrapy.FormRequest(
+			url,
+			formdata = {"method" : "next", "params" : json.dumps(params), "_xsrf" : _xsrf},
+			headers = self.headers,
+			cookies = self.cookie,
+			callback = self.next_topic_page)
+
+	def next_topic_page(self, response):
+		""" next_topic_page """
+		# print response.body
+		try:
+			result_dict = json.loads(response.body)
+			result_code = result_dict.get('r', 0)
+			if result_code != 0:
+				return
+			for msg in result_dict.get('msg', []):
+				selector = scrapy.Selector(text = msg)
+				return self.extract_topic_item(selector)
+
+		except Exception, e:
+			print 'NEXT_TOPIC_PAGE Error', e
+
+	def extract_topic_item(self, selector):
+		topics = []
 		for scope in selector.xpath('//div[re:test(@class, "item")]'):
 			topic = {}
 			for key, path in {
@@ -96,26 +144,3 @@ class SpiderZhihu(CrawlSpider):
 		for topic in topics:
 			url = 'https://www.zhihu.com' + topic['href']
 			yield self.make_requests_from_url(url, callback = self.parse)
-
-		try:
-			init_list_data_str = selector.xpath('//div[re:test(@class, "zh-general-list")]/@data-init').extract()[0]
-			init_list_data_dict = json.loads(init_list_data_str)
-			init_list_data_str = None
-
-			xsrf_str = selector.xpath('//input[re:test(@name, "_xsrf")]/@value').extract()[0]
-		except:
-			return
-
-		nodename = init_list_data_dict['nodename']
-		params = init_list_data_dict['params']
-
-		yield scrapy.FormRequest(
-			"https://www.zhihu.com/node/" + nodename,
-			formdata = {"method" : "next", "params" : json.dumps(params), "_xsrf" : xsrf_str},
-			headers = self.headers,
-			cookies = self.cookie,
-			callback = self.next_topic_page)
-
-	def next_topic_page(self, response):
-		""" next_topic_page """
-		pass
