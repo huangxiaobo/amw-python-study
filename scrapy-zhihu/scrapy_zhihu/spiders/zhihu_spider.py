@@ -72,11 +72,13 @@ class SpiderZhihu(CrawlSpider):
 
 	def parse_page(self, response):
 		"""parse_page."""
-		print response.body
+		# print response.body
+		pass
 
 	def parse(self, response):
 		"""parse."""
-		print response.body
+		# print response.body
+		pass
 
 	def parse_topic_page(self, response):
 		"""parse_topic_page.
@@ -114,7 +116,6 @@ class SpiderZhihu(CrawlSpider):
 
 	def next_topic_page(self, response):
 		""" next_topic_page """
-		# print response.body
 		try:
 			result_dict = json.loads(response.body)
 			result_code = result_dict.get('r', 0)
@@ -122,7 +123,8 @@ class SpiderZhihu(CrawlSpider):
 				return
 			for msg in result_dict.get('msg', []):
 				selector = scrapy.Selector(text = msg)
-				return self.extract_topic_item(selector)
+				for request in self.extract_topic_item(selector):
+					yield request
 
 		except Exception, e:
 			print 'NEXT_TOPIC_PAGE Error', e
