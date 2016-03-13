@@ -144,4 +144,11 @@ class SpiderZhihu(CrawlSpider):
 
 		for href in topic_hrefs:
 			url = 'https://www.zhihu.com' + href
-			yield self.make_requests_from_url(url, callback = self.parse)
+			yield self.make_requests_from_url(url, callback = self.parse_topic_questions)
+
+	def parse_topic_questions(self, response):
+		""" parse_topic_questions"""
+		# print response.body
+		selector = scrapy.Selector(response)
+		for scope in selector.xpath('//div[@class = "content"]'):
+			print scope.extract()

@@ -18,3 +18,7 @@ class ZhihuTopicItem(scrapy.Item):
 	desc = scrapy.Field()
 	img = scrapy.Field()
 	href = scrapy.Field()
+
+class ZhihuQuestionItem(scrapy.Item):
+	content = scrapy.Field()
+	link = scrapy.Field()
