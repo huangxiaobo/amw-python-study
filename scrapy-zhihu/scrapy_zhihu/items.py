@@ -12,3 +12,9 @@ class ScrapyZhihuItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     pass
+
+class ZhihuTopicItem(scrapy.Item):
+	title = scrapy.Field()
+	desc = scrapy.Field()
+	img = scrapy.Field()
+	href = scrapy.Field()

@@ -3,6 +3,7 @@
 
 from scrapy.contrib.spiders import CrawlSpider
 from scrapy.http import Request, FormRequest
+from scrapy_zhihu.items import ZhihuTopicItem
 import scrapy
 import json
 
@@ -130,19 +131,17 @@ class SpiderZhihu(CrawlSpider):
 			print 'NEXT_TOPIC_PAGE Error', e
 
 	def extract_topic_item(self, selector):
-		topics = []
+		topic_hrefs = []
 		for scope in selector.xpath('//div[re:test(@class, "item")]'):
-			topic = {}
-			for key, path in {
-				'href'	: './div//a[contains(@href, "topic")]/@href',
-				'img'	: './div//img/@src',
-				'title'	: './div//strong/text()',
-				'desc'	: './div/p/text()',
-				}.iteritems():
-				scope_result = scope.xpath(path).extract()
-				topic[key] = scope_result[0].encode('utf-8') if scope_result else ''
-			topics.append(topic)
+			topicItem = ZhihuTopicItem()
 
-		for topic in topics:
-			url = 'https://www.zhihu.com' + topic['href']
+			topicItem['href'] = ''.join(scope.xpath('./div//a[contains(@href, "topic")]/@href').extract())
+			topicItem['img'] = ''.join(scope.xpath('./div//img/@src').extract())
+			topicItem['title'] = ''.join(scope.xpath('./div//strong/text()').extract())
+			topicItem['desc'] = ''.join(scope.xpath('./div/p/text()').extract())
+			topic_hrefs.append(topicItem['href'])
+			yield topicItem
+
+		for href in topic_hrefs:
+			url = 'https://www.zhihu.com' + href
 			yield self.make_requests_from_url(url, callback = self.parse)
