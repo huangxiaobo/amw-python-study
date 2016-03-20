@@ -158,7 +158,7 @@ class SpiderZhihu(CrawlSpider):
 			yield topicItem
 
 		for href in topic_hrefs:
-			url = 'https://www.zhihu.com' + href
+			url = 'https://www.zhihu.com' + href + '/top-answers'
 			yield self.make_requests_from_url(url, callback = self.parse_topic_questions)
 
 	def parse_topic_questions(self, response):
