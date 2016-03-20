@@ -89,6 +89,19 @@ class SpiderZhihu(CrawlSpider):
 		selector = scrapy.Selector(response)
 		# self.topic_offset = self.extract_topic_item(selector)
 
+		""" Get all top topics id and name """
+		selector = selector.xpath('//ul[@class="zm-topic-cat-main clearfix"]//li')
+		top_topics = []
+		for scope in selector:
+			topic_id = int(scope.xpath('./@data-id').extract()[0])
+			topic_title = scope.xpath('./a/text()').extract()[0]
+			topic_link = scope.xpath('./a/@href').extract()[0]
+			top_topics.append({
+				'id' : topic_id,
+				'link' : topic_link,
+				'title' : topic_title,
+				})
+
 		try:
 			init_list_data_str = selector.xpath('//div[re:test(@class, "zh-general-list")]/@data-init').extract()[0]
 			init_list_data_dict = json.loads(init_list_data_str)
@@ -103,8 +116,10 @@ class SpiderZhihu(CrawlSpider):
 		node_url = "https://www.zhihu.com/node/" + nodename
 		params = init_list_data_dict['params']
 
-		for offset in range(0, 650, 20):
-			yield self.try_get_next_topic_page(node_url, params, xsrf_str, offset)
+		for top_topic in top_topics:
+			params['topic_id'] = top_topic['id']
+			for offset in range(0, 650, 20):
+				yield self.try_get_next_topic_page(node_url, params, xsrf_str, offset)
 
 	def try_get_next_topic_page(self, url, params, _xsrf, offset):
 		params['offset'] = offset
@@ -132,7 +147,7 @@ class SpiderZhihu(CrawlSpider):
 
 	def extract_topic_item(self, selector):
 		topic_hrefs = []
-		for scope in selector.xpath('//div[re:test(@class, "item")]'):
+		for scope in selector.xpath('//div[@class="item"]'):
 			topicItem = ZhihuTopicItem()
 
 			topicItem['href'] = ''.join(scope.xpath('./div//a[contains(@href, "topic")]/@href').extract())
@@ -151,4 +166,6 @@ class SpiderZhihu(CrawlSpider):
 		# print response.body
 		selector = scrapy.Selector(response)
 		for scope in selector.xpath('//div[@class = "content"]'):
-			print scope.extract()
+			question_link = ''.join(scope.xpath('./h2//a/@href').extract())
+			question_desc = ''.join(scope.xpath('./h2//a/text()').extract())
+			print question_link, question_desc
