@@ -14,6 +14,7 @@ BOT_NAME = 'scrapy_zhihu'
 SPIDER_MODULES = ['scrapy_zhihu.spiders']
 NEWSPIDER_MODULE = 'scrapy_zhihu.spiders'
 
+LOG_LEVEL = 'INFO'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'scrapy_zhihu (+http://www.yourdomain.com)'
@@ -62,7 +63,8 @@ DOWNLOAD_DELAY = 1
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'scrapy_zhihu.pipelines.ScrapyZhihuPipeline': 300,
+   'scrapy_zhihu.pipelines.ScrapyZhihuTopicPipeline': 300,
+   'scrapy_zhihu.pipelines.ScrapyZhihuTopAnswerPipeline': 500,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

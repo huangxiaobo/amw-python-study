@@ -3,7 +3,7 @@
 
 from scrapy.contrib.spiders import CrawlSpider
 from scrapy.http import Request, FormRequest
-from scrapy_zhihu.items import ZhihuTopicItem
+from scrapy_zhihu.items import ZhihuTopicItem, ZhihuTopAnswerItem
 import scrapy
 import json
 
@@ -118,7 +118,7 @@ class SpiderZhihu(CrawlSpider):
 
 		for top_topic in top_topics:
 			params['topic_id'] = top_topic['id']
-			for offset in range(0, 650, 20):
+			for offset in range(0, 1000, 20):
 				yield self.try_get_next_topic_page(node_url, params, xsrf_str, offset)
 
 	def try_get_next_topic_page(self, url, params, _xsrf, offset):
@@ -165,7 +165,9 @@ class SpiderZhihu(CrawlSpider):
 		""" parse_topic_questions"""
 		# print response.body
 		selector = scrapy.Selector(response)
-		for scope in selector.xpath('//div[@class = "content"]'):
-			question_link = ''.join(scope.xpath('./h2//a/@href').extract())
-			question_desc = ''.join(scope.xpath('./h2//a/text()').extract())
-			print question_link, question_desc
+		for scope in selector.xpath('//div[@class="feed-main"]//div[@class = "content"]'):
+			ansItem = ZhihuTopAnswerItem()
+			ansItem['link'] = ''.join(scope.xpath('./h2//a/@href').extract())
+			ansItem['question'] = ''.join(scope.xpath('./h2//a/text()').extract())
+			ansItem['answer'] = ''.join(scope.xpath('./div//div//textarea/text()').extract())
+			yield ansItem

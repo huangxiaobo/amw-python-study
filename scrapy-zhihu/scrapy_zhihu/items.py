@@ -19,6 +19,14 @@ class ZhihuTopicItem(scrapy.Item):
 	img = scrapy.Field()
 	href = scrapy.Field()
 
-class ZhihuQuestionItem(scrapy.Item):
-	content = scrapy.Field()
+	def __repr__(self):
+		return ""
+
+class ZhihuTopAnswerItem(scrapy.Item):
+	question = scrapy.Field()
+	answer = scrapy.Field()
 	link = scrapy.Field()
+
+	def __repr__(self):
+		""" only print out  """
+		return ""
