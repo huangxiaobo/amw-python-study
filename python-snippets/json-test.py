@@ -1,4 +1,6 @@
+# /usr/bin/env python
 # -*- encoding=utf-8 -*-
+
 import json
 
 json_str = '{"name": "hxb", "age" : 1, "国籍" : "中国", "sub":[{"x":1}, {"y":2}]}'
@@ -54,16 +56,17 @@ file = 'json-test.txt'
 
 
 def method_one():
-	# saved as pretty json format
-	with open(file, 'w') as fd:
-		json.dump(json_obj, fd, indent=4, ensure_ascii=False, encoding='utf-8')
+    # saved as pretty json format
+    with open(file, 'w') as fd:
+        json.dump(json_obj, fd, indent=4, ensure_ascii=False, encoding='utf-8')
 
 
 def method_two():
-	# will not keep json format
-	json_str = json.dumps(json_obj, indent=4, ensure_ascii=False, encoding='utf-8')
-	with open(file, 'w') as fd:
-		fd.write(json_str)
+    # will not keep json format
+    json_str = json.dumps(json_obj, indent=4, ensure_ascii=False,
+                          encoding='utf-8')
+    with open(file, 'w') as fd:
+        fd.write(json_str)
 
 
 method_one()

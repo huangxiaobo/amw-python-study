@@ -1,10 +1,12 @@
-#/usr/bin/python
-#-*- encoding=utf-8 -*-
+# /usr/bin/env python
+# -*- encoding=utf-8 -*-
 
 import argparse
 
+
 class EntryRegister(object):
     COMMAND = 'reg'
+
     def add_args(self, parent_parser):
         parser = parent_parser.add_parser(self.COMMAND, help='backup help')
         parser.add_argument('-id', help='the id of entry')
@@ -17,14 +19,15 @@ class EntryRegister(object):
 
 class EntryUnregister(object):
     COMMAND = 'unreg'
-    def add_args(self, parent_parser):
 
+    def add_args(self, parent_parser):
         parser = parent_parser.add_parser(self.COMMAND, help='unregister help')
         parser.add_argument('-id', help='the id of entry')
         parser.set_defaults(func=self)
 
     def __call__(self, args):
         print self.COMMAND, args.id
+
 
 def main():
     parser = argparse.ArgumentParser(add_help=False)
@@ -34,7 +37,6 @@ def main():
         EntryRegister(),
         EntryUnregister(),
     ]
-
 
     for processor in command_processors:
         processor.add_args(sub_parser)
@@ -47,6 +49,7 @@ def main():
 
     args = parser.parse_args()
     args.func(args)
+
 
 if __name__ == "__main__":
     main()
